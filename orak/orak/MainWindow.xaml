@@ -1,0 +1,20 @@
+﻿<Window x:Class="orak.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:orak"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="450" Width="800">
+    <Grid>
+        <ScrollViewer>
+
+        </ScrollViewer>
+        <ComboBox HorizontalAlignment="Left" Margin="200,0,0,0" Text="Tantárgy" VerticalAlignment="Center" Width="120">
+            <ComboBoxItem Cursor="Hand" Content="Közismereti"/>
+            <ComboBoxItem Cursor="Hand" Content="Szakmai"/>
+        </ComboBox>
+        <TextBox HorizontalAlignment="Left" Margin="10,0,0,0" TextWrapping="Wrap" Text="Tantárgy" VerticalAlignment="Center" Width="120"/>
+        <TextBox HorizontalAlignment="Left" Margin="135,0,0,0" TextWrapping="Wrap" Text="Évfolyam" VerticalAlignment="Center" Width="54"/>
+    </Grid>
+</Window>
