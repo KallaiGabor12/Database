@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("elsofeladat")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+9b4559b04db77930fa9deffc3acd5cc4c4816a1b")]
 [assembly: System.Reflection.AssemblyProductAttribute("elsofeladat")]
 [assembly: System.Reflection.AssemblyTitleAttribute("elsofeladat")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

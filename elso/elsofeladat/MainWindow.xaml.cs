@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
@@ -12,12 +13,39 @@ namespace StudentRegistry
     {
         private const string DataFile = "tanulok.json";
         private List<Tanulo> tanulok;
+        private ObservableCollection<Tanulo> tanuloMegjelenites;
 
         public MainWindow()
         {
             InitializeComponent();
             tanulok = BetoltAdatok();
+            tanuloMegjelenites = new ObservableCollection<Tanulo>();
+            DgTanulok.ItemsSource = tanuloMegjelenites;
             DpBeiratkozas.SelectedDate = DateTime.Now;
+        }
+
+        private void MainTabControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (e.Source is TabControl && DgTanulok != null && tanuloMegjelenites != null)
+            {
+                var tabControl = sender as TabControl;
+                if (tabControl?.SelectedIndex == 1) // Admin tab index = 1
+                {
+                    FrissitDataGrid();
+                }
+            }
+        }
+
+        private void FrissitDataGrid()
+        {
+            tanulok = BetoltAdatok();
+            GeneralSorszamokat(); // Biztosítjuk, hogy a sorszámok helyesek legyenek
+            tanuloMegjelenites.Clear();
+            foreach (var tanulo in tanulok)
+            {
+                tanuloMegjelenites.Add(tanulo);
+            }
+            FrissitOsszesito();
         }
 
         private void ChkKollegista_Checked(object sender, RoutedEventArgs e)
@@ -48,8 +76,7 @@ namespace StudentRegistry
                 Osztaly = (CmbOsztaly.SelectedItem as ComboBoxItem)?.Content.ToString(),
                 Kollegista = ChkKollegista.IsChecked == true,
                 Kollegium = ChkKollegista.IsChecked == true ?
-                    (CmbKollegium.SelectedItem as ComboBoxItem)?.Content.ToString() : null,
-                Debreceni = ChkDebreceni.IsChecked == true
+                    (CmbKollegium.SelectedItem as ComboBoxItem)?.Content.ToString() : null
             };
 
             tanulok.Add(ujTanulo);
@@ -70,10 +97,7 @@ namespace StudentRegistry
 
         private void BtnFrissites_Click(object sender, RoutedEventArgs e)
         {
-            tanulok = BetoltAdatok();
-            DgTanulok.ItemsSource = null;
-            DgTanulok.ItemsSource = tanulok;
-            FrissitOsszesito();
+            FrissitDataGrid();
         }
 
         private void BtnTorles_Click(object sender, RoutedEventArgs e)
@@ -96,11 +120,10 @@ namespace StudentRegistry
             if (result == MessageBoxResult.Yes)
             {
                 tanulok.Remove(tanulo);
+                tanuloMegjelenites.Remove(tanulo);
                 GeneralSorszamokat();
                 MentAdatok();
-                DgTanulok.ItemsSource = null;
-                DgTanulok.ItemsSource = tanulok;
-                FrissitOsszesito();
+                FrissitDataGrid();
                 MessageBox.Show("A tanuló sikeresen törölve!", "Siker", MessageBoxButton.OK, MessageBoxImage.Information);
             }
         }
@@ -111,12 +134,10 @@ namespace StudentRegistry
             statisztika.AppendLine("=== STATISZTIKA ===\n");
 
             var kollegistakSzama = tanulok.Count(t => t.Kollegista);
-            var debreceniSzama = tanulok.Count(t => t.Debreceni);
-            var bejarosSzama = tanulok.Count(t => !t.Kollegista && !t.Debreceni);
+            var nemKollegistakSzama = tanulok.Count(t => !t.Kollegista);
 
             statisztika.AppendLine($"Kollégisták száma: {kollegistakSzama}");
-            statisztika.AppendLine($"Debreceniek száma: {debreceniSzama}");
-            statisztika.AppendLine($"Bejárósok száma: {bejarosSzama}");
+            statisztika.AppendLine($"Nem kollégisták száma: {nemKollegistakSzama}");
             statisztika.AppendLine($"Összes tanuló: {tanulok.Count}\n");
 
             statisztika.AppendLine("=== ÉVENKÉNTI FELVÉTEL SZAKONKÉNT ===\n");
@@ -210,41 +231,46 @@ namespace StudentRegistry
             CmbOsztaly.SelectedIndex = -1;
             ChkKollegista.IsChecked = false;
             CmbKollegium.SelectedIndex = -1;
-            ChkDebreceni.IsChecked = false;
         }
 
         private void GeneralSorszamokat()
         {
-            var osztalyok = tanulok.GroupBy(t => t.Osztaly);
+            // Először csoportosítunk évek szerint, aztán minden évet feldolgozunk
+            var osszesTanulo = new List<Tanulo>();
 
-            foreach (var osztaly in osztalyok)
+            // Csoportosítás tanévenként (beiratkozási év alapján)
+            var tanevek = tanulok.GroupBy(t => t.BeiratkozasIdopontja.Year).OrderBy(g => g.Key);
+
+            foreach (var tanev in tanevek)
             {
-                var szeptemberElott = osztaly
-                    .Where(t => t.BeiratkozasIdopontja.Month < 9 ||
-                               (t.BeiratkozasIdopontja.Month == 9 && t.BeiratkozasIdopontja.Day == 1))
+                var ev = tanev.Key;
+                var szeptemberHatara = new DateTime(ev, 9, 1);
+
+                // Szeptember 1. előtti beiratkozások - névsorrendben
+                var szeptemberElott = tanev
+                    .Where(t => t.BeiratkozasIdopontja < szeptemberHatara)
                     .OrderBy(t => t.Nev)
                     .ToList();
 
-                var szeptemberUtan = osztaly
-                    .Where(t => t.BeiratkozasIdopontja.Month > 9 ||
-                               (t.BeiratkozasIdopontja.Month == 9 && t.BeiratkozasIdopontja.Day > 1))
+                // Szeptember 1-től - beiratkozás sorrendjében
+                var szeptemberUtanEsAznap = tanev
+                    .Where(t => t.BeiratkozasIdopontja >= szeptemberHatara)
                     .OrderBy(t => t.BeiratkozasIdopontja)
+                    .ThenBy(t => t.Nev)
                     .ToList();
 
-                int sorszam = 1;
-                foreach (var tanulo in szeptemberElott)
-                {
-                    tanulo.NaploSorszam = sorszam;
-                    tanulo.TorzslapSzam = $"{sorszam}/{tanulo.BeiratkozasIdopontja.Year}";
-                    sorszam++;
-                }
+                // Hozzáadjuk az összesített listához
+                osszesTanulo.AddRange(szeptemberElott);
+                osszesTanulo.AddRange(szeptemberUtanEsAznap);
+            }
 
-                foreach (var tanulo in szeptemberUtan)
-                {
-                    tanulo.NaploSorszam = sorszam;
-                    tanulo.TorzslapSzam = $"{sorszam}/{tanulo.BeiratkozasIdopontja.Year}";
-                    sorszam++;
-                }
+            // Sorszámok kiosztása a teljes, rendezett listára
+            int sorszam = 1;
+            foreach (var tanulo in osszesTanulo)
+            {
+                tanulo.NaploSorszam = sorszam;
+                tanulo.TorzslapSzam = $"{sorszam}/{tanulo.BeiratkozasIdopontja.Year}";
+                sorszam++;
             }
         }
 
@@ -289,7 +315,7 @@ namespace StudentRegistry
 
         private void FrissitOsszesito()
         {
-            if (tanulok.Count == 0)
+            if (tanulok == null || tanulok.Count == 0)
             {
                 TxtOsszesito.Text = "Nincs még tanuló a rendszerben.";
                 return;
@@ -297,8 +323,7 @@ namespace StudentRegistry
 
             TxtOsszesito.Text = $"Összes tanuló: {tanulok.Count} fő | " +
                                $"Kollégisták: {tanulok.Count(t => t.Kollegista)} fő | " +
-                               $"Debreceniek: {tanulok.Count(t => t.Debreceni)} fő | " +
-                               $"Bejárósok: {tanulok.Count(t => !t.Kollegista && !t.Debreceni)} fő";
+                               $"Nem kollégisták: {tanulok.Count(t => !t.Kollegista)} fő";
         }
     }
 
@@ -316,6 +341,5 @@ namespace StudentRegistry
         public string? Osztaly { get; set; }
         public bool Kollegista { get; set; }
         public string? Kollegium { get; set; }
-        public bool Debreceni { get; set; }
     }
 }

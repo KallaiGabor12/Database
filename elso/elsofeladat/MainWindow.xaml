@@ -55,8 +55,8 @@
     </Window.Resources>
 
     <Grid>
-        <TabControl Margin="10">
-            <TabItem Header="Új Tanuló Felvétele" FontSize="14">
+        <TabControl Margin="10" x:Name="MainTabControl" SelectionChanged="MainTabControl_SelectionChanged">
+            <TabItem Header="Új Tanuló Felvétele" FontSize="14" x:Name="TabUjTanulo">
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
                     <Grid Margin="20">
                         <Grid.ColumnDefinitions>
@@ -129,24 +129,18 @@
                             <ComboBoxItem Content="Medgyessy Ferenc Kollégium"/>
                         </ComboBox>
 
-                        <TextBlock Grid.Row="10" Grid.Column="0" Text="Debreceni:" FontWeight="Bold"/>
-                        <CheckBox Grid.Row="10" Grid.Column="1" x:Name="ChkDebreceni" 
-                                  Content="Debrecenben lakik"/>
-
-                        <StackPanel Grid.Row="11" Grid.Column="1" Orientation="Horizontal" Margin="0,20,0,0">
+                        <StackPanel Grid.Row="10" Grid.Column="1" Orientation="Horizontal" Margin="0,20,0,0">
                             <Button x:Name="BtnMentes" Content="Mentés" Width="120" Click="BtnMentes_Click"/>
-                            <Button x:Name="BtnUjKezdese" Content="Új kezdése" Width="120" 
-                                    Background="#FF9800" Click="BtnUjKezdese_Click"/>
                         </StackPanel>
 
-                        <TextBlock Grid.Row="12" Grid.Column="0" Grid.ColumnSpan="2" 
+                        <TextBlock Grid.Row="11" Grid.Column="0" Grid.ColumnSpan="2" 
                                    x:Name="TxtStatus" Foreground="Green" FontWeight="Bold" 
                                    Margin="0,10,0,0" TextWrapping="Wrap"/>
                     </Grid>
                 </ScrollViewer>
             </TabItem>
 
-            <TabItem Header="Admin" FontSize="14">
+            <TabItem Header="Admin" FontSize="14" x:Name="TabAdmin">
                 <Grid Margin="20">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -156,8 +150,6 @@
 
                     <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10">
                         <Button x:Name="BtnFrissites" Content="Frissítés" Width="120" Click="BtnFrissites_Click"/>
-                        <Button x:Name="BtnStatisztika" Content="Statisztika" Width="120" 
-                                Background="#4CAF50" Click="BtnStatisztika_Click"/>
                     </StackPanel>
 
                     <DataGrid Grid.Row="1" x:Name="DgTanulok" AutoGenerateColumns="False" 
@@ -172,6 +164,7 @@
                             <DataGridTextColumn Header="Név" Binding="{Binding Nev}" Width="150"/>
                             <DataGridTextColumn Header="Szül. hely" Binding="{Binding SzuletesiHely}" Width="120"/>
                             <DataGridTextColumn Header="Szül. idő" Binding="{Binding SzuletesiIdo, StringFormat=yyyy.MM.dd}" Width="100"/>
+                            <DataGridTextColumn Header="Beiratkozás" Binding="{Binding BeiratkozasIdopontja, StringFormat=yyyy.MM.dd}" Width="100"/>
                             <DataGridTextColumn Header="Osztály" Binding="{Binding Osztaly}" Width="70"/>
                             <DataGridTextColumn Header="Szak" Binding="{Binding Szak}" Width="120"/>
                             <DataGridCheckBoxColumn Header="Kollégista" Binding="{Binding Kollegista}" Width="80"/>
